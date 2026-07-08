@@ -1,0 +1,1424 @@
+{
+  "name": "whatsapp-automation-test v3 IDN",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "@devlikeapro/n8n-nodes-waha.wahaTrigger",
+      "typeVersion": 202502,
+      "position": [
+        -1200,
+        464
+      ],
+      "id": "23f12d33-bd13-40c3-a2dd-a387e662c13c",
+      "name": "WAHA Trigger",
+      "webhookId": "24b3cbd7-559c-45c0-9587-4b09117bfecf"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2d32d16a-341c-41c0-b696-9b11d87b4daf",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        832
+      ],
+      "id": "374b3e66-eb62-4ed1-82ab-c916a62cfab1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ (() => { try { return $('Format Product Message').item.json.ai_input_text; } catch (e) { return $('Edit Fields').item.json.payload.body; } })() }}",
+        "options": {
+          "systemMessage": "Anda adalah \"Bobby\" (AI Assistant), asisten layanan pelanggan virtual untuk jasa titip dan impor jastipby bobby.\nIdentitas & Gaya Bahasa\n\n- Karakter: Ramah, sopan, solutif, santai, dan menggunakan gaya bahasa CS lokal ala WhatsApp.\n- Sapaan: Gunakan panggilan \"Kak\"/\"Kakak\", serta kata penegas natural seperti \"yaa\", \"nih\", \"bisa banget\", \"siap\".\n- Batasan panjang teks: Maksimal 3–4 kalimat per respons agar percakapan terasa interaktif (kecuali saat memberikan rincian biaya di Langkah Wajib 3). Jangan pernah mengirim dinding teks panjang.\n- Emoji: Gunakan secukupnya untuk menghangatkan nada (🙏😉), jangan berlebihan.\nPrinsip Percakapan (Turn-Taking)\n- Jawab HANYA apa yang ditanyakan pelanggan saat itu juga. Jangan memberi informasi langkah berikutnya sebelum pelanggan merespons.\n- Jangan pernah memberikan semua informasi (kurs, alamat, ongkir, estimasi waktu) sekaligus di awal percakapan.\n- Selalu ingatkan bahwa PT. Sukses Cargo Indonesia adalah Forwarder (Jasa Kirim Saja). Pelanggan belanja mandiri di marketplace (Taobao, 1688, Alibaba, Tmall) pakai akun mereka sendiri, lalu barang dikirim ke Gudang China milik SCI.\n- Jangan pernah berpindah fase (Fase 0 → 1 → 2 → 3) lebih cepat dari yang diminta pelanggan. Ikuti alur, jangan melompat.\n\n---\nFASE 0: SAPAAN AWAL & TRIAGE\n\nIni adalah kontak pertama dari pelanggan (pesan pertama di sesi chat, atau sudah lama tidak ada percakapan).\n\n- Sambut dengan hangat, perkenalkan diri sebagai Bobby dari SCI, dan tanyakan apa yang bisa dibantu — jangan langsung membahas kurs, ongkir, atau alamat gudang di pesan pembuka.\n- Contoh: *\"Halo Kak, selamat datang di jastipby bobby! Aku Bobby, siap bantu urusan kirim barang dari China yaa 😊 Ada yang bisa dibantu nih Kak — mau tanya-tanya dulu atau langsung cek ongkir kirim?\"*\n- Jika pelanggan langsung menyebutkan kebutuhan spesifik di pesan pertama (misal langsung tanya ongkir atau kurs), lewati sapaan panjang, respons singkat lalu langsung arahkan ke Fase 1 atau Fase 2 sesuai konteks pertanyaannya.\n- Jika pesan pelanggan tidak jelas/ambigu (misal cuma \"halo\" atau \"min\"), balas ramah dan tanyakan kebutuhannya, jangan berasumsi.\n\n---\nFASE 1: LAYANAN EDUKASI & DISKUSI (WAJIB PAKAI TOOL)\n\n- Anda memiliki Tool bernama `GetKursAndStoreAdress`.\n- JANGAN PERNAH mengarang informasi mengenai Kurs RMB, Alamat Gudang China, atau batasan gudang.\n- WAJIB memanggil Tool `GetKursAndStoreAdress` setiap kali pelanggan bertanya atau berdiskusi soal hal-hal tersebut. Gunakan data dari tool itu untuk menjawab singkat dan akurat.\n- Jika pelanggan hanya bertanya edukatif (belum siap order), jawab pertanyaannya saja lalu tutup dengan pertanyaan terbuka ringan, misalnya: *\"Ada lagi yang mau ditanyakan Kak, atau mau langsung coba cek estimasi ongkirnya?\"* — jangan mendorong terlalu agresif ke arah closing.\n- Jika Tool gagal/error, gunakan DATA BACKUP di bagian bawah prompt ini, dan tetap sampaikan secara natural (jangan bilang \"sistem saya error\" ke pelanggan — cukup jawab dengan data backup seolah itu normal).\n\n---\nFASE 2: MEMULAI PROSES ORDER & CEK ONGKIR\n# Langkah Wajib 1 — Lokasi, Jalur, Berat, & Harga Barang\nKetika pelanggan ingin mengirim barang atau mengecek biaya pengiriman, kumpulkan empat data ini sebelum menghitung apa pun (boleh ditanyakan dalam satu pesan, seperti form checkout singkat):\n1. Kecamatan & Kota/Kabupaten tujuan\n2. Jalur: Laut atau Udara\n3. Perkiraan berat barang (kg) — atau volume (cbm) kalau dia tahu\n4. Harga barang di marketplace (dalam RMB/Yuan, sesuai yang tertera di Taobao/1688/Alibaba)\n\n> *\"Bisa banget Kak! Biar aku bisa hitungkan total tagihannya secara akurat, boleh tolong infokan 4 hal ini ya Kak:*\n> *Kecamatan & Kota/Kabupaten tujuan*\n> *Mau jalur Laut atau Udara?*\n> *Perkiraan berat barangnya berapa kg?*\n> *Harga barang di marketplace-nya berapa (dalam Yuan/RMB)?* \"\n\nJangan lanjut ke Langkah 2 sebelum keempat data ini lengkap. Kalau pelanggan hanya menjawab sebagian, tanyakan ulang bagian yang kurang saja — jangan minta ulang dari awal.\n# Langkah Wajib 2 — Cek Ongkir Dinamis\nSetelah lokasi didapat, panggil tool `getRates` (HTTP Request Biteship) dengan mengirim nama wilayah ke parameter `destination_text`.\n- Jika `getRates` mengembalikan beberapa kurir reguler (misal JNE REG, SiCepat REG), ambil satu tarif paling standar/ekonomis.\n- Jika `getRates` gagal/error, katakan: *\"Mohon maaf ya Kak, saat ini sedang ada sedikit kendala teknis pada sistem pengecekan ongkir domestik. Boleh dicoba lagi beberapa saat kemudian yaa. 🙏\"*\n- Jangan mengulang tool call berkali-kali dalam satu respons jika hasil sudah didapat — cukup satu kali panggilan per permintaan lokasi baru.\n- Panggil juga `GetKursAndStoreAdress` di langkah ini untuk mendapatkan kurs RMB terbaru (kalau belum dipanggil sebelumnya di sesi ini).\n# Langkah Wajib 3 — Hitung & Tampilkan Total Tagihan (Invoice)\n\n⚠️ Aturan berat > 11 kg: Jika berat yang diinfokan pelanggan di atas 11 kg, JANGAN hitung ongkir internasional secara otomatis. Sampaikan bahwa kirimannya masuk kategori grosir/cargo dan admin akan menghitungkan harga khusus secara manual, lalu kirimkan invoice-nya menyusul — jangan lanjut ke Fase 3 (rekening pembayaran) sampai admin memberi angka final. Contoh:\n> *\"Wah mantap Kak, kiriman segini (>11kg) udah masuk kategori grosir/cargo nih — biasanya malah jauh lebih murah! Admin kami akan hitungkan harga khusus dan kirim invoice totalnya ke chat ini yaa, mohon ditunggu sebentar 🙏\"*\n\nJika berat ≤ 11 kg, hitung total tagihan dengan rumus berikut (bulatkan ke Rupiah terdekat):\n- `berat_hitung = MAX(berat_kg, 1)` — minimum charge 1 kg\n- `biaya_barang = harga_barang_rmb × kurs_rmb`\n- `ongkir_internasional = berat_hitung × [Rp 30.000/kg jika Laut | Rp 150.000/kg jika Udara]`\n- `ongkir_domestik = berat_hitung × tarif_dari_getRates`\n- `TOTAL_TAGIHAN = biaya_barang + ongkir_internasional + ongkir_domestik`\n\nSajikan hasilnya dengan bullet points biasa (JANGAN PERNAH pakai tabel Markdown), tampilkan jalur yang dipilih pelanggan saja, dan selalu akhiri dengan baris Total yang jelas:\n\nFormat:\n```\nBerikut rincian tagihan untuk kiriman Kakak ke [Nama Kecamatan], [Nama Kota/Kabupaten] ya Kak (jalur [Laut/Udara], ±[berat] kg):\n\n1. Harga Barang\n• [harga_barang_rmb] RMB × kurs Rp [kurs] = Rp [biaya_barang]\n\n2. China ke Jakarta (Gudang SCI)\n• Via [Laut/Udara]: [berat] kg × Rp [30.000 / 150.000]/kg = Rp [ongkir_internasional]\n\n3. Jakarta ke [Nama Kecamatan]\n• Kurir Domestik: [berat] kg × Rp [tarif getRates]/kg = Rp [ongkir_domestik]\n\nTotal Tagihan: Rp [TOTAL_TAGIHAN]\n\nKeterangan Tambahan:\n• Harga di atas sudah all-in ya Kak, bea cukai sudah termasuk jadi aman banget tanpa biaya tak terduga.\n• Catatan: total ini berdasarkan perkiraan berat yang Kakak infokan. Kalau berat aktual di gudang China beda dari perkiraan, tim admin akan infokan selisihnya sebelum barang dikirim yaa.\n\nEstimasi Waktu Pengiriman (Normal):\n• Via [Laut/Udara]: [Laut: 4–6 minggu | Udara: 7–14 hari] sejak barang sampai di gudang China.\n• Jalur Domestik: 2–5 hari tergantung kota tujuan.\n\nApakah rinciannya sudah sesuai dan Kakak ingin langsung lanjut ke proses order untuk mendapatkan alamat gudang China kami?\n```\n\n---\nFASE 3: CLOSING & PEMBERIAN REKENING PEMBAYARAN\n\nTugas utama Anda di fase ini selesai setelah pelanggan menyatakan setuju, fix ingin order, atau meminta alamat gudang (contoh: \"oke saya mau order\", \"minta alamat gudang\").\n\n- Prasyarat: `TOTAL_TAGIHAN` dari Fase 2 Langkah 3 harus sudah dihitung dan ditampilkan ke pelanggan sebelum masuk fase ini. Jika berat >11kg (harga belum final dari admin), jangan masuk Fase 3 — tetap di status menunggu invoice manual dari admin.\n- JANGAN PERNAH memberikan alamat gudang China secara langsung sebelum pelanggan mengirimkan bukti transfer.\n- WAJIB keluarkan kalimat penutup dan rincian rekening resmi berikut — hanya angka `[TOTAL_TAGIHAN]` yang boleh diisi sesuai hasil hitungan, sisanya tidak boleh diubah:\n\n> \"Baik Kak, rincian tagihannya sudah kami kunci ke sistem yaa. Total yang perlu ditransfer adalah Rp [TOTAL_TAGIHAN]. Kakak bisa transfer ke rekening resmi PT. Sukses Cargo Indonesia berikut nih:\n>\n> 🏛️ Bank BCA\n> 🔢 No. Rekening: 1234-5678-90\n> 👤 Atas Nama: PT. Sukses Cargo Indonesia\n>\n> Jika sudah melakukan transfer, mohon kirimkan FOTO/BUKTI TRANSFERNYA di chat ini ya Kak. Begitu bukti transfer Kakak kirimkan, sistem kami akan otomatis mencatatnya dan langsung mengirimkan alamat gudang China beserta kode resi Kakak. Terima kasih banyak! 🙏\"\n\nSetelah kalimat ini terkirim, hentikan proses — jangan tambahkan penjelasan lain, jangan ulangi rincian biaya, cukup tunggu respons/bukti transfer dari pelanggan.\n\n---\nFASE 4: SETELAH BUKTI TRANSFER DIKIRIM (MENUNGGU VERIFIKASI ADMIN)\n\n> Catatan teknis: begitu pelanggan mengirim media/foto, otomasi n8n (bukan Bobby) yang mengambil alih — mengirim konfirmasi awal, menyimpan order ke Supabase, dan meneruskan buktinya ke grup admin. Bobby baru aktif lagi jika pelanggan mengirim pesan teks susulan sebelum admin membalas.\n\nJika pelanggan bertanya status/follow-up setelah mengirim bukti transfer tapi sebelum admin memberi nomor resi (status order masih `PENDING_ADMIN`):\n- Jangan ulangi rincian biaya atau instruksi pembayaran dari awal.\n- Jangan menjanjikan alamat gudang atau nomor resi secara langsung — itu wewenang admin setelah verifikasi mutasi bank.\n- Balas dengan menenangkan dan realistis, contoh:\n  > *\"Siap Kak, bukti transfernya sudah kami terima dan lagi dicek sama tim verifikasi mutasi bank yaa. Begitu sudah dikonfirmasi, alamat gudang China dan kode resi bakal langsung dikirim ke chat ini kok. Mohon ditunggu sebentar ya Kak 🙏\"*\n- Jika pelanggan mengirim bukti transfer kedua kalinya untuk order yang sama (misal karena panik belum ada balasan), jangan proses ulang sebagai order baru — cukup sampaikan bahwa bukti pertama sudah diterima dan sedang diproses.\n- Jika pelanggan mengeluh nominal transfernya beda dari `TOTAL_TAGIHAN` yang diinfokan (kurang/lebih), jangan hitung ulang atau ambil keputusan sendiri — sampaikan itu akan dicek dan dikonfirmasi oleh admin bersama tim verifikasi, bukan oleh Bobby.\n\n---\nGUARDRAILS UMUM\n\n- Tidak berimprovisasi harga/diskon. Semua angka harus berasal dari tool (`GetKursAndStoreAdress`, `getRates`) atau data backup di bawah — tidak pernah dikarang atau dinegosiasikan sepihak oleh AI.\n- Di luar topik forwarder/cargo (misal pertanyaan personal, topik sensitif, atau tidak relevan dengan jasa SCI): jawab singkat dengan sopan lalu arahkan kembali ke topik layanan, tanpa terkesan mengabaikan pelanggan.\n- Komplain atau nada emosional dari pelanggan: tetap tenang, empatik, jangan defensif. Jika komplain menyangkut status order/pembayaran yang butuh keputusan manusia (refund, barang hilang, dsb), sampaikan akan diteruskan ke tim/admin — jangan membuat janji atau keputusan atas nama perusahaan.\n- Tidak menyebut kompetitor atau membandingkan harga dengan jasa forwarder lain.\n- Kerahasiaan data: jangan pernah membagikan data pelanggan lain, nomor rekening selain yang resmi di atas, atau detail internal proses verifikasi.\n\n---\nDATA BACKUP (JIKA TOOL GOOGLE SHEETS ERROR)\n\n- Kurs RMB Hari Ini: Rp 2.250 / 1 Yuan (RMB)\n- Batas Free Gudang: Maksimal barang dititip gratis di gudang China adalah 3 minggu.\n- Minimal Pengiriman: Batasan minimum charge adalah 1 kg (barang di bawah 1 kg tetap dihitung tarif 1 kg).\n- Aturan Berat > 11 Kg: Berhak mendapatkan \"Harga Khusus Grosir/Cargo\" yang dihitung manual oleh admin.\n\n## PENANGANAN SCREENSHOT PRODUK (Taobao/1688/Alibaba/JD/Tmall)\nKadang pesan yang kamu terima diawali dengan \"[Dari screenshot produk]\" — sistem sudah otomatis membaca gambar produk yang dikirim pelanggan, tapi HANYA mengambil nama produk (kalau jelas terlihat) dan harga dalam RMB. Info ini titik awal, BUKAN data final.\n\nWAJIB ikuti urutan ini — JANGAN pernah lompat langsung ke Langkah Wajib 1 (form ongkir) begitu terima screenshot:\n\n**Langkah A — Konsultasi Produk (wajib dulu, sebelum bahas ongkir sama sekali):**\nKonfirmasi singkat produk yang ditemukan, lalu tanyakan HANYA dua hal: (1) mau berapa jumlah/quantity, (2) warna/tipe/varian yang diinginkan kalau produknya punya banyak pilihan. Jangan singgung kecamatan, jalur, atau berat di tahap ini.\n> Contoh: *\"Nemu barangnya nih Kak — [nama produk kalau ada], sekitar [harga] RMB. Mau ambil berapa pcs, dan warna/tipe yang mana ya Kak? 😊\"*\nKalau harga RMB dari gambar null/tidak kebaca, tanyakan itu juga di tahap ini (bukan di Langkah Wajib 1).\n\n**Langkah B — Baru lanjut ke Langkah Wajib 1** setelah pelanggan menjawab jumlah dan varian: lanjutkan seperti alur normal (tanya kecamatan/kota tujuan, jalur, berat — harga barang sudah ada dari screenshot, cukup konfirmasi ulang kalau perlu), lalu hitung Total Tagihan di Langkah Wajib 3 seperti biasa.\n\nKalau pelanggan mengoreksi hasil ekstraksi (misal \"bukan itu Kak, harganya beda\" atau \"warnanya bukan itu\"), ikuti koreksi pelanggan sebagai sumber kebenaran, bukan hasil ekstraksi gambar."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2080,
+        1280
+      ],
+      "id": "7f03bf17-aa07-4420-ac3c-c71eb3b2ee9b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this endpoint to get location ID",
+        "url": "=https://api.biteship.com/v1/maps/areas?countries=ID&input={{ $fromAI('input', `Location name to search`) }}&type=single",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "biteship_test.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibjhuLWJpdGVzaGlwIiwidXNlcklkIjoiNmEzNGY2Yzc3M2UzMGExMzI1YjQ2MWY0IiwiaWF0IjoxNzgxODU3NDI0fQ.tHKdiWIQfAH6gWr6gkmFt-S2DnB5poZywIYlFwxLvBc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        2480,
+        1600
+      ],
+      "id": "75796d61-d059-4ec9-93cf-92e93d159ecb",
+      "name": "Get Location"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this to get shipping rate",
+        "method": "POST",
+        "url": "https://api.biteship.com/v1/rates/couriers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "biteship_test.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoibjhuLWJpdGVzaGlwIiwidXNlcklkIjoiNmEzNGY2Yzc3M2UzMGExMzI1YjQ2MWY0IiwiaWF0IjoxNzgxODU3NDI0fQ.tHKdiWIQfAH6gWr6gkmFt-S2DnB5poZywIYlFwxLvBc"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"origin_area_id\": \"IDNP3IDNC445IDND5589IDZ15710\",\n  \"destination_area_id\": \"{{ $fromAI('destination_id', 'Destination area ID from GetLocation tool') }}\",\n  \"couriers\": \"jne,sicepat,jnt\",\n  \"items\": [\n    {\n      \"name\": \"Barang Impor\",\n      \"description\": \"Paket\",\n      \"value\": 100000,\n      \"weight\": 1000,\n      \"quantity\": 1\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        2640,
+        1600
+      ],
+      "id": "c7f3758d-103a-49ea-997d-8385fb592714",
+      "name": "Get Rates"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Stop Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2480,
+        1280
+      ],
+      "id": "8a3d06d7-c6d6-43ea-b96c-dab288ca5203",
+      "name": "Stop Typing1",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2736,
+        1280
+      ],
+      "id": "e4689824-7a50-47fd-9b13-8c2db323625d",
+      "name": "reply client",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Full Flow Cargo automation\n",
+        "height": 624,
+        "width": 1632,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1312,
+        1184
+      ],
+      "typeVersion": 1,
+      "id": "ced47d4e-776e-4e50-989a-d3579f744b62",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "amount": "={{ ($('Edit Fields').item.json.payload.body.length / 5) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1616,
+        1280
+      ],
+      "id": "beb35beb-3163-4a36-88eb-46f1958664e6",
+      "name": "Wait",
+      "webhookId": "8c5e848f-c235-4b90-b2ab-186fda785889"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Start Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1840,
+        1280
+      ],
+      "id": "284155df-60ba-403d-80bd-3c7c40d2a680",
+      "name": "Start Typing",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Seen",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "messageId": "={{ $('Edit Fields').item.json.payload.id }}",
+        "participant": "",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1392,
+        1280
+      ],
+      "id": "6964758e-39fb-4355-8146-fdb4f377a2aa",
+      "name": "Send Seen",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Seen",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "messageId": "={{ $('Edit Fields').item.json.payload.id }}",
+        "participant": "",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1520,
+        128
+      ],
+      "id": "75062164-c57c-42c6-8f09-ffa46dfaaa64",
+      "name": "Send Seen1",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ ($('Edit Fields').item.json.payload.body.length / 5) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        128
+      ],
+      "id": "5f68d6db-b11e-4ea4-b9a9-f6e8a7ea91e3",
+      "name": "Wait1",
+      "webhookId": "8c5e848f-c235-4b90-b2ab-186fda785889"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Start Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1904,
+        128
+      ],
+      "id": "f9623d53-caab-4e32-9b3c-f4190ec320c4",
+      "name": "Start Typing1",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Stop Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2096,
+        128
+      ],
+      "id": "0d679453-7321-486b-8c89-d44c211161cc",
+      "name": "Stop Typing",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "text": "=Terima kasih banyak atas konfirmasinya Kakak! 😍🙏 Bukti transfernya sudah berhasil masuk ke sistem kami nih. \n\nMohon tunggu sebentar ya Kak, tim kami sedang melakukan verifikasi mutasi bank. Setelah beres, alamat gudang China dan kode marking unik Kakak akan langsung dikirim di chat ini yaa! ✨",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2288,
+        128
+      ],
+      "id": "a62a7ec8-393f-45ed-81ff-3ebb3154f37b",
+      "name": "reply client1",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Edit Fields').item.json.payload.from }}",
+                    "rightValue": "120363411413200786@g.us",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "68311962-0cde-4bf4-b5f4-3d73464e39cd"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ce401f2b-aaf1-4238-9b79-e256ebdd0ff5",
+                    "leftValue": "={{ $('Edit Fields').item.json.payload.hasMedia }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "617fb029-72db-49c8-abb6-2b45864d6998",
+                    "leftValue": "={{ 1 }}",
+                    "rightValue": "={{ 1 }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        816
+      ],
+      "id": "a7129cce-59d7-4ed9-8f07-deebada73671",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "whatsapp_orders",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_message_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Edit Fields').item.json.payload._data.quotedStanzaID }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        80
+      ],
+      "id": "c67b0ede-3d3e-45c0-9c37-0f7ce80c7846",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "jw8kDuVuMwwue3yk",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "whatsapp_orders",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_message_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Edit Fields').item.json.payload._data.quotedStanzaID }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status_verifikasi",
+              "fieldValue": "VERIFIED"
+            },
+            {
+              "fieldId": "nomor_resi",
+              "fieldValue": "={{ $('WAHA Trigger').item.json.payload.body }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        160,
+        80
+      ],
+      "id": "c3e9f9c8-38d2-45a1-82bb-1a72c94fb5bc",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "jw8kDuVuMwwue3yk",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Start Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        400,
+        80
+      ],
+      "id": "8d1fb6d3-505d-4cd0-8e67-52e8f99cc400",
+      "name": "Start Typing2",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Stop Typing",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        624,
+        80
+      ],
+      "id": "5c1ea24e-f5a2-4a22-ab49-598af1a8f4f6",
+      "name": "Stop Typing2",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Get many rows').item.json.client_chat_id }}",
+        "text": "=Pembayaran Kakak sudah terverifikasi oleh Admin kami. \n\nBerikut adalah nomor resi nya ya Kakak: {{ $('Update a row').item.json.nomor_resi }}\n\nSilakan gunakan marking tersebut pada nama dan alamat pengiriman saat berbelanja di China ya Kak! Terima kasih banyak. 🙏",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        880,
+        80
+      ],
+      "id": "a3d74b3b-0ecd-4b25-b339-47759c8448a7",
+      "name": "reply client2",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "=120363411413200786@g.us",
+        "reply_to": "={{ $json.id }}",
+        "text": "=📢 *ADA BUKTI TRANSFER BARU* Dari: {{ $('WAHA Trigger').item.json.payload.sender.name }} ({{ $('WAHA Trigger').item.json.payload.from.replace('@c.us','') }})  Admin, jika mutasi sudah masuk ke rekening BCA, mohon *REPLY/BALAS* pesan ini cukup dengan mengetik *Nomor Resi/Marking* untuk client ini ya!",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2032,
+        368
+      ],
+      "id": "eb421982-5605-45be-a1ce-141368854994",
+      "name": "Send a text message",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "whatsapp_orders",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "client_chat_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Edit Fields').item.json.payload.from }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "last_message_id",
+              "fieldValue": "={{ $json.id.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2272,
+        368
+      ],
+      "id": "20085452-7b2a-498b-954d-dc2fb598d654",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "jw8kDuVuMwwue3yk",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Forward Message",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "=120363411413200786@g.us",
+        "messageId": "={{ $('Edit Fields').item.json.payload.id }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1776,
+        368
+      ],
+      "id": "47a381fa-2e9b-402b-8551-e4781e2ddd2a",
+      "name": "Forward Proof to Group",
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Full Flow Cargo automation\n",
+        "height": 528,
+        "width": 1078,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1424,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "575afe96-f588-4ec6-affb-7fe6193e185d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Full Flow Cargo automation\n",
+        "height": 336,
+        "width": 1184,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "ab3965b9-ddec-480d-83c0-2fc5d04adfbd",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').item.json.payload.from }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        1936,
+        1616
+      ],
+      "id": "404d23bc-01de-45bf-bb7f-99ec931f95a0",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Panggil tool ini SEGERA setelah menampilkan Total Tagihan ke pelanggan di Langkah Wajib 3, sebelum masuk ke Fase 3. Kirim berat_kg, harga_barang_rmb, dan total_tagihan hasil perhitunganmu.",
+        "tableId": "whatsapp_orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "client_chat_id",
+              "fieldValue": "={{ $('WAHA Trigger').item.json.payload.from }}"
+            },
+            {
+              "fieldId": "client_name",
+              "fieldValue": "={{ $fromAI('client_name') }}"
+            },
+            {
+              "fieldId": "berat_kg",
+              "fieldValue": "={{ $fromAI('berat_kg') }}"
+            },
+            {
+              "fieldId": "harga_barang_rmb",
+              "fieldValue": "={{ $fromAI('harga_barang_rmb') }}"
+            },
+            {
+              "fieldId": "total_tagihan",
+              "fieldValue": "={{ $fromAI('total_tagihan') }}"
+            },
+            {
+              "fieldId": "status_verifikasi",
+              "fieldValue": "AWAITING_PAYMENT"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2336,
+        1600
+      ],
+      "id": "228c341e-63b2-4771-bd21-9e4622bbbc5b",
+      "name": "Create a row in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "jw8kDuVuMwwue3yk",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Edit Fields').item.json.payload.media.url.replace('localhost:3000', 'host.docker.internal:3000') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "aa4062e6cf22452dac82e54533493745"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -128,
+        704
+      ],
+      "id": "a0b6d322-e103-43dd-ad53-9b8c5fbcda3c",
+      "name": "Get Media File",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "Kamu adalah classifier untuk jasa cargo/jastip China-Indonesia. Lihat gambar ini dan tentukan salah satu dari 3 kategori:\n1. PAYMENT_PROOF - screenshot/foto bukti transfer bank (mutasi, struk transfer, e-banking).\n2. PRODUCT_SCREENSHOT - screenshot produk dari marketplace China (Taobao/1688/Alibaba/JD/Tmall) yang menunjukkan barang yang mau dibeli.\n3. OTHER - selain dua itu.\n\nKalau PRODUCT_SCREENSHOT, cari HARGA barang dalam Yuan/RMB yang terlihat di gambar (biasanya ada simbol ¥). Nama produk juga boleh diambil kalau jelas terlihat.\n\nBalas HANYA dengan JSON valid, tanpa teks lain, tanpa markdown code block, format persis:\n{\"type\": \"PAYMENT_PROOF|PRODUCT_SCREENSHOT|OTHER\", \"product_name\": string atau null, \"price_rmb\": number atau null, \"confidence\": number 0-1}\n\nJangan mengarang data yang tidak terlihat jelas di gambar - isi null kalau tidak yakin.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        704
+      ],
+      "id": "1393fe76-24ce-485c-90df-69274d77cb18",
+      "name": "Classify Screenshot",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fJ9T96tEmF51V4kR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "VERIFY IN UI: Resource should be 'Image', Operation should be 'Analyze Image'. Dropdown values may differ slightly from what's pre-filled here - reselect if it shows an error."
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\n\nlet raw = '';\nif (item.content && Array.isArray(item.content.parts) && item.content.parts[0] && item.content.parts[0].text) {\n  raw = item.content.parts[0].text;\n} else if (typeof item.content === 'string') {\n  raw = item.content;\n} else if (typeof item.text === 'string') {\n  raw = item.text;\n} else if (typeof item.data === 'string') {\n  raw = item.data;\n}\n\nlet parsed;\ntry {\n  const cleaned = String(raw).replace(/```json|```/g, '').trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = { type: 'OTHER', product_name: null, price_rmb: null, confidence: 0 };\n}\n\nreturn [{ json: { ...item, classification: parsed } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        704
+      ],
+      "id": "c93ed6fe-d025-475b-8fef-a09061916c72",
+      "name": "Parse Classification"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f26afd08-88ee-4792-98d5-1804d405901f",
+                    "leftValue": "={{ $json.classification.type }}",
+                    "rightValue": "PAYMENT_PROOF",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2f67ba2b-071a-4065-ba3f-95531120085f",
+                    "leftValue": "={{ $json.classification.type }}",
+                    "rightValue": "PRODUCT_SCREENSHOT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b2945c79-9d5f-4656-a43c-5b763ccaeffe",
+                    "leftValue": "={{ 1 }}",
+                    "rightValue": "={{ 1 }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        688
+      ],
+      "id": "f5729d2c-4487-45e3-9566-cf10358c225f",
+      "name": "Route Screenshot Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $json.classification || {};\nconst parts = [];\nparts.push('[Dari screenshot produk] Saya mau tanya/order barang ini');\nif (c.product_name) parts.push(`nama: ${c.product_name}`);\nif (c.price_rmb) parts.push(`harga: ${c.price_rmb} RMB`);\nparts.push('Tolong bantu hitungkan estimasi totalnya ya (boleh ditanya dulu kalau ada info lain yang masih kurang).');\n\nreturn [{\n  json: {\n    ...$json,\n    ai_input_text: parts.join(', ')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        704
+      ],
+      "id": "718e83cb-b16e-4433-93ef-8fb324836b00",
+      "name": "Format Product Message"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Edit Fields').item.json.session }}",
+        "chatId": "={{ $('Edit Fields').item.json.payload.from }}",
+        "text": "Maaf Kak, aku belum yakin ini gambar bukti transfer atau screenshot barang yaa 🙏 Boleh dikonfirmasi ulang atau kirim ulang gambarnya dengan lebih jelas?",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        912,
+        928
+      ],
+      "id": "fc7dd982-7bab-4fa3-b2a3-45a050e31aef",
+      "name": "Ask to Clarify Screenshot",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "wahaApi": {
+          "id": "x2UfanQoKEn15X7I",
+          "name": "WAHA account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "Full Flow Cargo automation\n",
+        "height": 592,
+        "width": 1270,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        592
+      ],
+      "typeVersion": 1,
+      "id": "a4539851-eae1-4e37-bdc1-a15ae2a70768",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        704
+      ],
+      "id": "6503b7a7-8930-4256-970f-b9061b668758",
+      "name": "Wait2",
+      "webhookId": "fbb00371-6788-437a-9dc5-67aaed5f081f"
+    },
+    {
+      "parameters": {
+        "tableId": "whatsapp_orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "client_chat_id",
+              "fieldValue": "={{ $('WAHA Trigger').item.json.payload.from }}"
+            },
+            {
+              "fieldId": "client_name",
+              "fieldValue": "={{ $('WAHA Trigger').item.json.payload.sender.name || 'Client SCI' }}"
+            },
+            {
+              "fieldId": "status_verifikasi",
+              "fieldValue": "PENDING_ADMIN"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        368
+      ],
+      "id": "28e93d64-9e18-4360-9d88-077a6c1641fc",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "jw8kDuVuMwwue3yk",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-4-31b-it:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        1616
+      ],
+      "id": "ad311b67-ac7a-47ad-993d-fd800a4df4c2",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Xf2oWlk2qgZmVlox",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WAHA Trigger": {
+      "main": [
+        [],
+        [],
+        [],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Location": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Rates": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Typing1": {
+      "main": [
+        [
+          {
+            "node": "reply client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Start Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Start Typing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing1": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Typing": {
+      "main": [
+        [
+          {
+            "node": "reply client1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Media File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reply client1": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing2": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Typing2": {
+      "main": [
+        [
+          {
+            "node": "reply client2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Start Typing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forward Proof to Group": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Media File": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Parse Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Classification": {
+      "main": [
+        [
+          {
+            "node": "Route Screenshot Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Screenshot Type": {
+      "main": [
+        [
+          {
+            "node": "Send Seen1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Product Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ask to Clarify Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Product Message": {
+      "main": [
+        [
+          {
+            "node": "Send Seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Classify Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Forward Proof to Group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c9863afc-6ef0-4254-86b6-76a53b0b6c40",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "73729e2bb6233e160455464e3834880139d1e01cc3b8da69502cba28766436d5"
+  },
+  "nodeGroups": [],
+  "id": "bV9EviIMPiz372Ou",
+  "tags": []
+}
