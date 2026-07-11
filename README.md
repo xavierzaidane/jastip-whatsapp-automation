@@ -6,9 +6,16 @@ An enterprise-grade, event-driven n8n workflow that automates WhatsApp customer 
 
 
 # Workflow Overview
-<p align="center">
-  <img src="docs/workflow.png" alt="Workflow" width="100%">
-</p>
+
+| Architecture | Live Demo |
+|--------------|-----------|
+| <img src="docs/workflow.png" alt="Workflow Diagram" width="100%"> | <img src="docs/bobby.gif" alt="Workflow Demo" width="100%"> |
+
+## Full Video Demonstration
+
+Watch the complete workflow here:
+
+https://drive.google.com/file/d/19FApeRaioo1X_fEaq09dBFPAEEepXqeJ/view?usp=sharing
 
 ---
 
