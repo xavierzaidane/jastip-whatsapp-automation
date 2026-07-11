@@ -1,4 +1,4 @@
-# AI-Driven WhatsApp Cross-Border Logistics Automation
+# WhatsApp Cross-Border Logistics Automation
 
 An enterprise-grade, event-driven n8n workflow that automates WhatsApp customer inquiries, AI-powered product extraction, dynamic logistics pricing, and order management for cross-border shopping (Jastip & Import Services).
 
